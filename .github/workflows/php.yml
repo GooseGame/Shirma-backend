@@ -18,13 +18,15 @@ jobs:
 
       - name: Create deployment archive
         run: |
-          {
-            echo '.git'
-            echo '.github'
-            echo 'deploy.tar.gz'
-          } > exclude.lst
-          
-          tar -czf deploy.tar.gz --exclude-from=exclude.lst .
+          tar -czf deploy.tar.gz \
+            core/ \
+            config/ \
+            includes/ \
+            public/ \
+            vendor/ \
+            composer.json \
+            composer.lock \
+
           ls -lh deploy.tar.gz
 
       - name: Upload archive to server
@@ -34,7 +36,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "deploy.tar.gz"
-          target: "/home/${{ secrets.SERVER_USER }}/"
+          target: "/home/c/${{ secrets.SERVER_USER }}/"
           rm: true
 
       - name: Extract and deploy
@@ -45,41 +47,18 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script_timeout: 15m
           script: |
-            DEPLOY_USER="${{ secrets.SERVER_USER }}"
-            DEPLOY_DIR="/home/$DEPLOY_USER"
-            TEMP_DIR="$DEPLOY_DIR/temp_deploy_$(date +%s)"
+            DEPLOY_DIR="/home/с/${{ secrets.SERVER_USER }}"
             
-            if [ ! -f "$DEPLOY_DIR/deploy.tar.gz" ]; then
-              echo "Error: deploy.tar.gz not found!"
-              exit 1
-            fi
+            tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$DEPLOY_DIR"
             
-            mkdir -p "$TEMP_DIR"
-            chown "$DEPLOY_USER:$DEPLOY_USER" "$TEMP_DIR"
-            chmod 755 "$TEMP_DIR"
-            
-            echo "Extracting files..."
-            if ! tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$TEMP_DIR"; then
-              echo "Failed to extract archive!"
-              rm -rf "$TEMP_DIR"
-              exit 1
-            fi
-            
-            echo "Deploying files..."
-            mkdir -p "$DEPLOY_DIR/public_html"
-            
-            if [ -d "$TEMP_DIR/public" ]; then
-              rsync -a --delete "$TEMP_DIR/public/" "$DEPLOY_DIR/public_html/"
-            fi
-            
-            find "$TEMP_DIR" -mindepth 1 -maxdepth 1 ! -name public -exec cp -rp {} "$DEPLOY_DIR/" \;
+            rm -rf "$DEPLOY_DIR/public_html"  # Удаляем старую версию
+            mv "$DEPLOY_DIR/public" "$DEPLOY_DIR/public_html"
             
             find "$DEPLOY_DIR" -type d -exec chmod 755 {} \;
             find "$DEPLOY_DIR" -type f -exec chmod 644 {} \;
             chmod -R 755 "$DEPLOY_DIR/public_html"
             
-            rm -rf "$TEMP_DIR" "$DEPLOY_DIR/deploy.tar.gz"
-            echo "Deployment completed successfully!"
+            rm -f "$DEPLOY_DIR/deploy.tar.gz"
 
       - name: Create .env
         uses: appleboy/ssh-action@v0.1.4
@@ -88,7 +67,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}"
+            DEPLOY_DIR="/home/c/${{ secrets.SERVER_USER }}"
             cat > "$DEPLOY_DIR/.env" <<EOF
             DB_HOST=${{ secrets.DB_HOST }}
             DB_NAME=${{ secrets.DB_NAME }}
