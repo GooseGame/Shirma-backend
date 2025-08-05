@@ -12,15 +12,21 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: |
+          composer install --no-dev --optimize-autoloader
+          sync
 
       - name: Create deployment archive
         run: |
-          # Исключаем ненужные файлы
+          {
+            echo '.git'
+            echo '.github'
+            echo 'deploy.tar.gz'
+          } > exclude.lst
+          
           tar -czf deploy.tar.gz \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='deploy.tar.gz' \
+            --exclude-from=exclude.lst \
+            --ignore-failed-read \
             .
           
       - name: Deploy via SSH
@@ -31,42 +37,16 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script_timeout: 10m
           script: |
-            echo "=== Starting deployment ==="
             cd /home/c/${{ secrets.SERVER_USER }}
-            
-            rm -f deploy.tar.gz
-            
-            start_time=$(date +%s)
-            
             mkdir -p temp_deploy
-            echo "Directory created"
-            
-            echo "Copying archive..."
             scp -o StrictHostKeyChecking=no ${{ github.workspace }}/deploy.tar.gz .
-            
-            echo "Extracting files..."
             tar -xzf deploy.tar.gz -C temp_deploy
-            
-            echo "Moving public files..."
-            mkdir -p public_html
             rsync -a --delete temp_deploy/public/ public_html/
-            
-            echo "Copying other files..."
             find temp_deploy -mindepth 1 -maxdepth 1 -not -name public -exec cp -r {} . \;
-            
-            echo "Cleaning up..."
             rm -rf temp_deploy deploy.tar.gz
-            
-            echo "Setting permissions..."
             find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
-            chmod -R 755 public_html
-            
-            echo "Deployment complete!"
-            
-            end_time=$(date +%s)
-            echo "Deployment took $((end_time - start_time)) seconds"
-            
+            chmod -R 755 public_html      
 
       - name: Create .env
         uses: appleboy/ssh-action@v0.1.4
