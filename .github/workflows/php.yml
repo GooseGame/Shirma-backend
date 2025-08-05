@@ -35,8 +35,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "deploy.tar.gz"
-          target: "/home/c/${{ secrets.SERVER_USER }}/"
-          rm: true
+          target: "/home/c/${{ secrets.SERVER_USER }}/deploy/"
+          rm: false
 
       - name: Extract and deploy
         uses: appleboy/ssh-action@v0.1.4
@@ -44,27 +44,30 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          script_timeout: 15m
           script: |
-            DEPLOY_DIR="/home/c/${{ secrets.SERVER_USER }}"
-            TEMP_DIR="$DEPLOY_DIR/deploy_temp_$(date +%s)"
+            DEPLOY_ROOT="/home/c/${{ secrets.SERVER_USER }}"
+            DEPLOY_DIR="$DEPLOY_ROOT/deploy"
             
+            if [ ! -f "$DEPLOY_DIR/deploy.tar.gz" ]; then
+              echo "Error: Archive not found!"
+              exit 1
+            fi
+            
+            TEMP_DIR="$DEPLOY_DIR/temp_$(date +%s)"
             mkdir -p "$TEMP_DIR"
             
             tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$TEMP_DIR"
             
-            mkdir -p "$DEPLOY_DIR/public_html"
-            rsync -a --delete "$TEMP_DIR/public/" "$DEPLOY_DIR/public_html/"
-            
-            cp -r "$TEMP_DIR/core" "$DEPLOY_DIR/"
-            cp -r "$TEMP_DIR/includes" "$DEPLOY_DIR/"
-            cp -r "$TEMP_DIR/vendor" "$DEPLOY_DIR/"
+            mkdir -p "$DEPLOY_ROOT/public_html"
+            rsync -a --delete "$TEMP_DIR/public/" "$DEPLOY_ROOT/public_html/"
+
+            rsync -a "$TEMP_DIR/core/" "$DEPLOY_ROOT/core/"
+            rsync -a "$TEMP_DIR/includes/" "$DEPLOY_ROOT/includes/"
+            rsync -a "$TEMP_DIR/vendor/" "$DEPLOY_ROOT/vendor/"
+            cp "$TEMP_DIR/composer.json" "$DEPLOY_ROOT/"
+            cp "$TEMP_DIR/composer.lock" "$DEPLOY_ROOT/"
             
             rm -rf "$TEMP_DIR" "$DEPLOY_DIR/deploy.tar.gz"
-            
-            chmod -R 755 "$DEPLOY_DIR/public_html"
-            find "$DEPLOY_DIR/core" -type d -exec chmod 755 {} \;
-            find "$DEPLOY_DIR/core" -type f -exec chmod 644 {} \;
 
       - name: Create .env
         uses: appleboy/ssh-action@v0.1.4
