@@ -39,7 +39,6 @@ jobs:
             composer install --no-dev --optimize-autoloader
             
             chmod 755 public_html
-            chmod 644 public_html/.htaccess
 
       - name: Create .env
         uses: appleboy/ssh-action@v0.1.4
