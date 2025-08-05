@@ -2,7 +2,7 @@ name: Deploy to Hosting
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   deploy:
@@ -16,37 +16,58 @@ jobs:
           composer install --no-dev --optimize-autoloader
           sync
 
-      - name: Create deployment archive
+      - name: Prepare deployment archive
         run: |
-          {
-            echo '.git'
-            echo '.github'
-            echo 'deploy.tar.gz'
-          } > exclude.lst
-          
-          tar -czf deploy.tar.gz \
-            --exclude-from=exclude.lst \
-            --ignore-failed-read \
-            .
-          
-      - name: Deploy via SSH
+          mkdir -p deploy_build
+          rsync -a --exclude='.git' --exclude='.github' --exclude='deploy_build' ./ deploy_build/
+          cd deploy_build
+          tar -czf ../deploy.tar.gz .
+          cd ..
+          ls -lh deploy.tar.gz
+
+      - name: Upload archive to server
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "deploy.tar.gz"
+          target: "/home/${{ secrets.SERVER_USER }}/deploy.tar.gz"
+
+      - name: Extract and deploy
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          script_timeout: 10m
+          script_timeout: 15m
           script: |
-            cd /home/c/${{ secrets.SERVER_USER }}
-            mkdir -p temp_deploy
-            scp -o StrictHostKeyChecking=no ${{ github.workspace }}/deploy.tar.gz .
-            tar -xzf deploy.tar.gz -C temp_deploy
-            rsync -a --delete temp_deploy/public/ public_html/
-            find temp_deploy -mindepth 1 -maxdepth 1 -not -name public -exec cp -r {} . \;
-            rm -rf temp_deploy deploy.tar.gz
-            find . -type d -exec chmod 755 {} \;
-            find . -type f -exec chmod 644 {} \;
-            chmod -R 755 public_html      
+            DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}"
+            echo "Deploying to $DEPLOY_DIR"
+            
+            TEMP_DIR="$DEPLOY_DIR/deploy_temp"
+            mkdir -p "$TEMP_DIR"
+            chmod 755 "$TEMP_DIR"
+            
+            echo "Extracting files..."
+            tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$TEMP_DIR" || exit 1
+            
+            echo "Syncing public files..."
+            mkdir -p "$DEPLOY_DIR/public_html"
+            rsync -a --delete "$TEMP_DIR/public/" "$DEPLOY_DIR/public_html/" || exit 1
+            
+            echo "Copying other files..."
+            find "$TEMP_DIR" -mindepth 1 -maxdepth 1 -not -name public -exec cp -rp {} "$DEPLOY_DIR/" \;
+            
+            echo "Setting permissions..."
+            find "$DEPLOY_DIR" -type d -exec chmod 755 {} \;
+            find "$DEPLOY_DIR" -type f -exec chmod 644 {} \;
+            chmod -R 755 "$DEPLOY_DIR/public_html"
+            
+            echo "Cleaning up..."
+            rm -rf "$TEMP_DIR" "$DEPLOY_DIR/deploy.tar.gz"
+            
+            echo "Deployment completed successfully!"
 
       - name: Create .env
         uses: appleboy/ssh-action@v0.1.4
@@ -55,7 +76,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cat > /home/c/${{ secrets.SERVER_USER }}/.env <<EOF
+            cat > "/home/${{ secrets.SERVER_USER }}/.env" <<EOF
             DB_HOST=${{ secrets.DB_HOST }}
             DB_NAME=${{ secrets.DB_NAME }}
             DB_USER=${{ secrets.DB_USER }}
@@ -65,4 +86,4 @@ jobs:
             JWT_ACCESS_SECRET=${{secrets.JWT_ACCESS_SECRET}}
             JWT_REFRESH_SECRET=${{secrets.JWT_REFRESH_SECRET}}
             EOF
-            chmod 600 /home/c/${{ secrets.SERVER_USER }}/.env
+            chmod 600 "/home/${{ secrets.SERVER_USER }}/.env"
