@@ -16,13 +16,15 @@ jobs:
           composer install --no-dev --optimize-autoloader
           sync
 
-      - name: Prepare deployment archive
+      - name: Create deployment archive
         run: |
-          mkdir -p deploy_build
-          rsync -a --exclude='.git' --exclude='.github' --exclude='deploy_build' ./ deploy_build/
-          cd deploy_build
-          tar -czf ../deploy.tar.gz .
-          cd ..
+          {
+            echo '.git'
+            echo '.github'
+            echo 'deploy.tar.gz'
+          } > exclude.lst
+          
+          tar -czf deploy.tar.gz --exclude-from=exclude.lst .
           ls -lh deploy.tar.gz
 
       - name: Upload archive to server
@@ -32,7 +34,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "deploy.tar.gz"
-          target: "/home/${{ secrets.SERVER_USER }}/deploy.tar.gz"
+          target: "/home/${{ secrets.SERVER_USER }}/"
+          rm: true
 
       - name: Extract and deploy
         uses: appleboy/ssh-action@v0.1.4
@@ -42,31 +45,40 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script_timeout: 15m
           script: |
-            DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}"
-            echo "Deploying to $DEPLOY_DIR"
+            DEPLOY_USER="${{ secrets.SERVER_USER }}"
+            DEPLOY_DIR="/home/$DEPLOY_USER"
+            TEMP_DIR="$DEPLOY_DIR/temp_deploy_$(date +%s)"
             
-            TEMP_DIR="$DEPLOY_DIR/deploy_temp"
+            if [ ! -f "$DEPLOY_DIR/deploy.tar.gz" ]; then
+              echo "Error: deploy.tar.gz not found!"
+              exit 1
+            fi
+            
             mkdir -p "$TEMP_DIR"
+            chown "$DEPLOY_USER:$DEPLOY_USER" "$TEMP_DIR"
             chmod 755 "$TEMP_DIR"
             
             echo "Extracting files..."
-            tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$TEMP_DIR" || exit 1
+            if ! tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$TEMP_DIR"; then
+              echo "Failed to extract archive!"
+              rm -rf "$TEMP_DIR"
+              exit 1
+            fi
             
-            echo "Syncing public files..."
+            echo "Deploying files..."
             mkdir -p "$DEPLOY_DIR/public_html"
-            rsync -a --delete "$TEMP_DIR/public/" "$DEPLOY_DIR/public_html/" || exit 1
             
-            echo "Copying other files..."
-            find "$TEMP_DIR" -mindepth 1 -maxdepth 1 -not -name public -exec cp -rp {} "$DEPLOY_DIR/" \;
+            if [ -d "$TEMP_DIR/public" ]; then
+              rsync -a --delete "$TEMP_DIR/public/" "$DEPLOY_DIR/public_html/"
+            fi
             
-            echo "Setting permissions..."
+            find "$TEMP_DIR" -mindepth 1 -maxdepth 1 ! -name public -exec cp -rp {} "$DEPLOY_DIR/" \;
+            
             find "$DEPLOY_DIR" -type d -exec chmod 755 {} \;
             find "$DEPLOY_DIR" -type f -exec chmod 644 {} \;
             chmod -R 755 "$DEPLOY_DIR/public_html"
             
-            echo "Cleaning up..."
             rm -rf "$TEMP_DIR" "$DEPLOY_DIR/deploy.tar.gz"
-            
             echo "Deployment completed successfully!"
 
       - name: Create .env
@@ -76,7 +88,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cat > "/home/${{ secrets.SERVER_USER }}/.env" <<EOF
+            DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}"
+            cat > "$DEPLOY_DIR/.env" <<EOF
             DB_HOST=${{ secrets.DB_HOST }}
             DB_NAME=${{ secrets.DB_NAME }}
             DB_USER=${{ secrets.DB_USER }}
@@ -86,4 +99,4 @@ jobs:
             JWT_ACCESS_SECRET=${{secrets.JWT_ACCESS_SECRET}}
             JWT_REFRESH_SECRET=${{secrets.JWT_REFRESH_SECRET}}
             EOF
-            chmod 600 "/home/${{ secrets.SERVER_USER }}/.env"
+            chmod 600 "$DEPLOY_DIR/.env"
