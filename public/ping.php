@@ -1,2 +1,2 @@
 <?php
-echo 'pong';
+echo 'pong!';
