@@ -38,8 +38,6 @@ jobs:
             
             composer install --no-dev --optimize-autoloader
             
-            # Права доступа
-            chmod 750 .
             chmod 755 public_html
             chmod 644 public_html/.htaccess
 
