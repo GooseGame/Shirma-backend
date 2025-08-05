@@ -46,18 +46,25 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script_timeout: 15m
           script: |
-            DEPLOY_DIR="/home/с/${{ secrets.SERVER_USER }}"
+            DEPLOY_DIR="/home/c/${{ secrets.SERVER_USER }}"
+            TEMP_DIR="$DEPLOY_DIR/deploy_temp_$(date +%s)"
             
-            tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$DEPLOY_DIR"
+            mkdir -p "$TEMP_DIR"
             
-            rm -rf "$DEPLOY_DIR/public_html"  # Удаляем старую версию
-            mv "$DEPLOY_DIR/public" "$DEPLOY_DIR/public_html"
+            tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$TEMP_DIR"
             
-            find "$DEPLOY_DIR" -type d -exec chmod 755 {} \;
-            find "$DEPLOY_DIR" -type f -exec chmod 644 {} \;
+            mkdir -p "$DEPLOY_DIR/public_html"
+            rsync -a --delete "$TEMP_DIR/public/" "$DEPLOY_DIR/public_html/"
+            
+            cp -r "$TEMP_DIR/core" "$DEPLOY_DIR/"
+            cp -r "$TEMP_DIR/includes" "$DEPLOY_DIR/"
+            cp -r "$TEMP_DIR/vendor" "$DEPLOY_DIR/"
+            
+            rm -rf "$TEMP_DIR" "$DEPLOY_DIR/deploy.tar.gz"
+            
             chmod -R 755 "$DEPLOY_DIR/public_html"
-            
-            rm -f "$DEPLOY_DIR/deploy.tar.gz"
+            find "$DEPLOY_DIR/core" -type d -exec chmod 755 {} \;
+            find "$DEPLOY_DIR/core" -type f -exec chmod 644 {} \;
 
       - name: Create .env
         uses: appleboy/ssh-action@v0.1.4
