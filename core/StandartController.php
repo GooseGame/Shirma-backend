@@ -50,16 +50,17 @@ class RefreshController extends StandartController
 class AccessController extends StandartController
 {
 	public $decoded;
+	public $accessToken;
 
 	public function __construct()
 	{
 		parent::__construct();
 		$headers = getallheaders();
 		$authHeader = $headers['Authorization'] ?? '';
-		$accessToken = str_replace('Bearer ', '', $authHeader);
+		$this->accessToken = str_replace('Bearer ', '', $authHeader);
 
 		try {
-			$this->decoded = JWT::decode($accessToken, new Key($_ENV['JWT_ACCESS_SECRET'], 'HS256'));
+			$this->decoded = JWT::decode($this->accessToken, new Key($_ENV['JWT_ACCESS_SECRET'], 'HS256'));
 			
 			if ($this->decoded->exp < time()) {
 				throw new Exception('Token expired');

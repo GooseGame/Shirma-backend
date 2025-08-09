@@ -42,6 +42,7 @@ class login extends AccessController
 			$stmt = $this->db->prepare('SELECT id FROM users WHERE google_id = :google_id');
 			$stmt->bindValue(':google_id', $googleId);
 			$result = $stmt->fetch(PDO::FETCH_ASSOC);
+			$isNew = false;
 
 			if (!$result) {
 				$stmt = $this->db->prepare('INSERT INTO users (google_id, email) VALUES (:google_id, :email)');
@@ -49,6 +50,7 @@ class login extends AccessController
 				$stmt->bindValue(':email', $email);
 				$stmt->execute();
 				$userId = $this->db->lastInsertId();
+				$isNew = true;
 			} else {
 				$userId = $result['id'];
 			}
@@ -66,12 +68,67 @@ class login extends AccessController
 
 			// 5. Отправляем токены фронтенду
 			echo json_encode([
-				'accessToken' => $accessToken,
-				'refreshToken' => $refreshToken
+				'accessToken' 	=> $accessToken,
+				'refreshToken' 	=> $refreshToken,
+				'isNew'			=> $isNew
 			]);
 		} catch (Exception $e) {
 			http_response_code(401);
 			die(json_encode(['error' => $e->getMessage()]));
 		}
+	}
+
+	public function getUser() {
+		try {
+			$stmt = $this->db->prepare('SELECT email, name FROM users WHERE user_id = :id');
+			$stmt->bindValue(':id', $this->decoded['id']);
+			$user = $stmt->fetch();
+			if (!$user) {
+				http_response_code(400);
+				die(json_encode(['error' => 'No such user']));
+			} else {
+				echo json_encode([
+					'email'	=> $user['email'],
+					'name'	=> $user['name']
+				]);
+			}
+		} catch (PDOException $e) {
+			http_response_code(500);
+			die(json_encode(['error' => 'DB error']));
+		}
+	}
+
+	public function changeName() {
+		$data = json_decode(file_get_contents('php://input'), true);
+		if (!isset($data['name'])) {
+			http_response_code(400);
+			die(json_encode(['error' => 'No name']));
+		}
+		if (strlen($data['name']) > 200) {
+			die(json_encode(['error' => 'Too long name']));
+		}
+		try {
+			$stmt = $this->db->prepare('UPDATE USERS SET name = :name WHERE user_id = :id');
+			$stmt->bindValue(':name', $data['name']);
+			$stmt->bindValue(':id', $this->decoded['id']);
+			$stmt->execute();
+		} catch (PDOException $e) {
+			http_response_code(500);
+			die(json_encode(['error' => 'DB error']));
+		}
+
+		echo json_encode(['success' => true]);
+	}
+	public function deleteAccount() {
+		try {
+			$stmt = $this->db->prepare('DELETE FROM users WHERE user_id = :id');
+			$stmt->bindValue(':id', $this->decoded['id']);
+			$stmt->execute();
+		} catch (PDOException $e) {
+			http_response_code(500);
+			die(json_encode(['error' => 'DB error']));
+		}
+
+		echo json_encode(['success' => true]);
 	}
 }

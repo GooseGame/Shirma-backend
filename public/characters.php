@@ -47,7 +47,7 @@ class characters extends AccessController
 			echo json_encode(['success' => true]);
 		} catch (PDOException $e) {
 			http_response_code(500);
-			die(json_encode(['error' => 'Ошибка базы данных']));
+			die(json_encode(['error' => 'DB error']));
 		}
 	}
 }
