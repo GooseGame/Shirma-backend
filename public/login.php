@@ -80,7 +80,7 @@ class login extends AccessController
 
 	public function getUser() {
 		try {
-			$stmt = $this->db->prepare('SELECT email, name FROM users WHERE user_id = :id');
+			$stmt = $this->db->prepare('SELECT email, name, id FROM users WHERE user_id = :id');
 			$stmt->bindValue(':id', $this->decoded['id']);
 			$user = $stmt->fetch();
 			if (!$user) {
@@ -89,7 +89,8 @@ class login extends AccessController
 			} else {
 				echo json_encode([
 					'email'	=> $user['email'],
-					'name'	=> $user['name']
+					'name'	=> $user['name'],
+					'id'	=> $user['id']
 				]);
 			}
 		} catch (PDOException $e) {
