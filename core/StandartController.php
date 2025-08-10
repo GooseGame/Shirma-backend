@@ -15,7 +15,7 @@ class StandartController
 			die(json_encode(['error' => 'Unsupported Media Type']));
 		}
 		header('Content-Type: application/json');
-		header('Access-Control-Allow-Origin');
+		header('Access-Control-Allow-Origin: *');
 	}
 }
 
