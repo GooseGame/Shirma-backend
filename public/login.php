@@ -4,9 +4,6 @@ use Firebase\JWT\JWT;
 
 class login extends AccessController
 {
-	public function ping() {
-		echo 'pong';
-	}
 	public function google() {
 		try {
 			// 1. Получаем Google ID Token от фронтенда
