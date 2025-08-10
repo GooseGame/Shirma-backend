@@ -11,7 +11,14 @@ class presets extends AccessController
 			die;
 		}
 		$presetsSimplified = array_column($presets, 'content');
-		echo json_encode($presetsSimplified);
+		echo json_encode(['presets' => $presetsSimplified]);
+	}
+
+	public function count()
+	{
+		$presetsStmt = $this->db->prepare('SELECT COUNT(*) FROM presets');
+		$presetsCount = $presetsStmt->fetch();
+		echo json_encode($presetsCount);
 	}
 
 	public function save()

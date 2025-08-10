@@ -12,7 +12,7 @@ class characters extends AccessController
 			die;
 		}
 		$charsSimplified = array_column($characters, 'content');
-		echo json_encode($charsSimplified);
+		echo json_encode(['characters'=>$charsSimplified]);
 	}
 
 	public function save()
