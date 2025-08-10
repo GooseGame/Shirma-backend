@@ -4,7 +4,7 @@ use Firebase\JWT\JWT;
 
 class login extends AccessController
 {
-	public function index() {
+	public function google() {
 		try {
 			// 1. Получаем Google ID Token от фронтенда
 			$data = json_decode(file_get_contents('php://input'), true);
