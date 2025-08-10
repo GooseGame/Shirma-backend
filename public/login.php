@@ -1,6 +1,7 @@
 <?php
 use Google\Client;
 use Firebase\JWT\JWT;
+require_once __DIR__ . '/../core/StandartController.php';
 
 class login extends AccessController
 {
