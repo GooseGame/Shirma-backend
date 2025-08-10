@@ -66,6 +66,9 @@ jobs:
             rsync -a "$TEMP_DIR/vendor/" "$DEPLOY_ROOT/vendor/"
             cp "$TEMP_DIR/composer.json" "$DEPLOY_ROOT/"
             cp "$TEMP_DIR/composer.lock" "$DEPLOY_ROOT/"
+
+            chmod 755 $DEPLOY_ROOT
+            chmod 755 $DEPLOY_ROOT/vendor
             
             rm -rf "$TEMP_DIR" "$DEPLOY_DIR/deploy.tar.gz"
 
