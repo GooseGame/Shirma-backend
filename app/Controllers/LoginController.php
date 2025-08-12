@@ -8,6 +8,7 @@ class LoginController extends AccessController
 		try {
 			$stmt = $this->db->prepare('SELECT email, name, id FROM users WHERE user_id = :id');
 			$stmt->bindValue(':id', $this->decoded['id']);
+			$stmt->execute();
 			$user = $stmt->fetch();
 			if (!$user) {
 				http_response_code(400);

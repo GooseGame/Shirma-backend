@@ -16,6 +16,7 @@ class AuthController extends RefreshController
 	public function refresh() {
 		$stmt = $this->db->prepare('SELECT user_id, expires_at FROM refresh_tokens WHERE token = :token');
 		$stmt->bindValue(':token', $this->refreshToken);
+		$stmt->execute();
 		$tokenData = $stmt->fetch(\PDO::FETCH_ASSOC);
 
 		if (!$tokenData || strtotime($tokenData['expires_at']) < time()) {

@@ -43,6 +43,7 @@ class GoogleLoginController extends StandartController {
 
 			$stmt = $this->db->prepare('SELECT id FROM users WHERE google_id = :google_id');
 			$stmt->bindValue(':google_id', $googleId);
+			$stmt->execute();
 			$result = $stmt->fetch(\PDO::FETCH_ASSOC);
 			$isNew = false;
 

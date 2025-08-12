@@ -6,6 +6,7 @@ class PresetsController extends AccessController
 	public function get()
 	{
 		$presetsStmt = $this->db->prepare('SELECT content FROM presets');
+		$presetsStmt->execute();
 		$presets = $presetsStmt->fetchAll();
 
 		if (count($presets) === 0) {
@@ -19,6 +20,7 @@ class PresetsController extends AccessController
 	public function count()
 	{
 		$presetsStmt = $this->db->prepare('SELECT COUNT(*) FROM presets');
+		$presetsStmt->execute();
 		$presetsCount = $presetsStmt->fetch();
 		echo json_encode($presetsCount);
 	}
