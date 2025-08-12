@@ -17,12 +17,13 @@ jobs:
 
       - name: Prepare files
         run: |
-          mkdir -p deploy/public_html
-          cp -r vendor/ app/ core/ includes/ deploy/public_html/
-          cp composer.* deploy/public_html/
-          cp index.php .htaccess deploy/public_html/
+          mkdir -p temp_deploy/public_html
           
-          tar -czf deploy.tar.gz -C deploy .
+          cp -r vendor/ app/ core/ includes/ temp_deploy/public_html/
+          cp composer.* temp_deploy/public_html/
+          cp index.php .htaccess temp_deploy/public_html/
+          
+          tar -czf deploy.tar.gz -C temp_deploy/public_html .
 
       - name: Upload archive to server
         uses: appleboy/scp-action@v0.1.3
@@ -43,16 +44,14 @@ jobs:
           script: |
             DEPLOY_ROOT="/home/c/${{ secrets.SERVER_USER }}/public_html"
             
-            tar -xzf "$DEPLOY_ROOT/deploy/deploy.tar.gz" -C "$DEPLOY_ROOT"
+            tar -xzf "/home/c/${{ secrets.SERVER_USER }}/deploy/deploy.tar.gz" -C "$DEPLOY_ROOT"
             
             find "$DEPLOY_ROOT" -type d -exec chmod 755 {} \;
             chmod -R 750 "$DEPLOY_ROOT/app" "$DEPLOY_ROOT/core" "$DEPLOY_ROOT/includes"
-            
-            # .htaccess защищает файлы
             chmod 644 "$DEPLOY_ROOT/.htaccess"
             
             # Удаляем архив
-            rm -rf "$DEPLOY_ROOT/deploy"
+            rm -f "/home/c/${{ secrets.SERVER_USER }}/deploy/deploy.tar.gz"
 
       - name: Create .env
         uses: appleboy/ssh-action@v0.1.4
