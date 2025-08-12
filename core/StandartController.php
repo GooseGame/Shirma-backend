@@ -10,7 +10,6 @@ class StandartController
 	public function __construct()
 	{
 		try {
-		$this->db = createPDO();
 		if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
 			http_response_code(415);
 			die(json_encode(['error' => 'Unsupported Media Type']));
@@ -35,6 +34,7 @@ class StandartController
 		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 			exit(0);
 		}
+		$this->db = createPDO();
 		} catch (\Exception $e) {
 			echo $e->getMessage();
 		}
