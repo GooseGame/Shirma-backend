@@ -47,7 +47,7 @@ jobs:
             tar -xzf "/home/c/${{ secrets.SERVER_USER }}/deploy/deploy.tar.gz" -C "$DEPLOY_ROOT"
             
             find "$DEPLOY_ROOT" -type d -exec chmod 755 {} \;
-            chmod -R 750 "$DEPLOY_ROOT/app" "$DEPLOY_ROOT/core" "$DEPLOY_ROOT/includes"
+            chmod -R 750 "$DEPLOY_ROOT/app" "$DEPLOY_ROOT/core" "$DEPLOY_ROOT/includes" "$DEPLOY_ROOT/vendor"
             chmod 644 "$DEPLOY_ROOT/.htaccess"
             
             # Удаляем архив
