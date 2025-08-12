@@ -1,5 +1,7 @@
 <?php
-class presets extends AccessController
+namespace App\Controllers;
+use Сore\AccessController;
+class PresetsController extends AccessController
 {
 	public function get()
 	{
@@ -44,7 +46,7 @@ class presets extends AccessController
 			$stmt->execute([$cleanCharacter]);
 			
 			echo json_encode(['success' => true]);
-		} catch (PDOException $e) {
+		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'Ошибка базы данных']));
 		}

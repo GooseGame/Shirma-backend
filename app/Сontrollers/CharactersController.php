@@ -1,5 +1,7 @@
 <?php
-class characters extends AccessController
+namespace App\Controllers;
+use Сore\AccessController;
+class CharactersController extends AccessController
 {
 	public function get()
 	{
@@ -45,7 +47,7 @@ class characters extends AccessController
 			$stmt->execute([$data['user_id'], $cleanCharacter]);
 			
 			echo json_encode(['success' => true]);
-		} catch (PDOException $e) {
+		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'DB error']));
 		}

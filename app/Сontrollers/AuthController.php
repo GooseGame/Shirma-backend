@@ -1,7 +1,9 @@
 <?php
+namespace App\Controllers;
 use Firebase\JWT\JWT;
+use Сore\RefreshController;
 
-class auth extends RefreshController
+class AuthController extends RefreshController
 {
 	public function logout() {
 		$stmt = $this->db->prepare('DELETE FROM refresh_tokens WHERE token = :token');
@@ -14,7 +16,7 @@ class auth extends RefreshController
 	public function refresh() {
 		$stmt = $this->db->prepare('SELECT user_id, expires_at FROM refresh_tokens WHERE token = :token');
 		$stmt->bindValue(':token', $this->refreshToken);
-		$tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+		$tokenData = $stmt->fetch(\PDO::FETCH_ASSOC);
 
 		if (!$tokenData || strtotime($tokenData['expires_at']) < time()) {
 			http_response_code(401);

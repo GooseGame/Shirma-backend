@@ -1,9 +1,10 @@
 <?php
+namespace App\Controllers;
+use Сore\AccessController;
 use Google\Client;
 use Firebase\JWT\JWT;
-require_once __DIR__ . '/../core/StandartController.php';
 
-class login extends AccessController
+class LoginController extends AccessController
 {
 	public function google() {
 		try {
@@ -29,11 +30,11 @@ class login extends AccessController
 				die(json_encode(['error' => 'Неверный Google токен']));
 			}
 			if ($payload['aud'] !== $_ENV['GOOGLE_CLIENT_ID']) {
-				throw new Exception('Token audience mismatch');
+				throw new \Exception('Token audience mismatch');
 			}
 
 			if ($payload['exp'] < time()) {
-				throw new Exception('Token expired');
+				throw new \Exception('Token expired');
 			}
 
 			// 3. Ищем или создаём пользователя
@@ -42,7 +43,7 @@ class login extends AccessController
 
 			$stmt = $this->db->prepare('SELECT id FROM users WHERE google_id = :google_id');
 			$stmt->bindValue(':google_id', $googleId);
-			$result = $stmt->fetch(PDO::FETCH_ASSOC);
+			$result = $stmt->fetch(\PDO::FETCH_ASSOC);
 			$isNew = false;
 
 			if (!$result) {
@@ -73,7 +74,7 @@ class login extends AccessController
 				'refreshToken' 	=> $refreshToken,
 				'isNew'			=> $isNew
 			]);
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			http_response_code(401);
 			die(json_encode(['error' => $e->getMessage()]));
 		}
@@ -94,7 +95,7 @@ class login extends AccessController
 					'id'	=> $user['id']
 				]);
 			}
-		} catch (PDOException $e) {
+		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'DB error']));
 		}
@@ -114,7 +115,7 @@ class login extends AccessController
 			$stmt->bindValue(':name', $data['name']);
 			$stmt->bindValue(':id', $this->decoded['id']);
 			$stmt->execute();
-		} catch (PDOException $e) {
+		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'DB error']));
 		}
@@ -126,7 +127,7 @@ class login extends AccessController
 			$stmt = $this->db->prepare('DELETE FROM users WHERE user_id = :id');
 			$stmt->bindValue(':id', $this->decoded['id']);
 			$stmt->execute();
-		} catch (PDOException $e) {
+		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'DB error']));
 		}

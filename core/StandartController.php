@@ -1,8 +1,9 @@
 <?php
-require_once __DIR__ . '/../includes/config.php';
-require_once __DIR__ . '/../includes/db.php';
+namespace Сore;
 use Firebase\JWT\Key;
 use Firebase\JWT\JWT;
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/config.php';
 
 class StandartController
 {
@@ -36,7 +37,7 @@ class StandartController
 		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 			exit(0);
 		}
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			echo $e->getMessage();
 		}
 	}
@@ -87,9 +88,9 @@ class AccessController extends StandartController
 			$this->decoded = JWT::decode($this->accessToken, new Key($_ENV['JWT_ACCESS_SECRET'], 'HS256'));
 			
 			if ($this->decoded->exp < time()) {
-				throw new Exception('Token expired');
+				throw new \Exception('Token expired');
 			}
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			http_response_code(401);
 			die(json_encode(['error' => 'Invalid or expired token']));
 		}
