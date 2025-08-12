@@ -1,23 +1,18 @@
+DirectoryIndex index.php
+Options -Indexes
+
+# Включение rewrite
 RewriteEngine On
+RewriteBase /
 
-# Запрещаем доступ ко всему, КРОМЕ index.php
-RewriteCond %{REQUEST_URI} !^/index\.php
-RewriteRule ^ - [F,L]
-
-# Перенаправляем все запросы на index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
-# Дополнительная защита
-<FilesMatch "^\.">        # Блокируем скрытые файлы (.env, .gitignore)
+<FilesMatch "\.(env|json|lock)$">
     Require all denied
 </FilesMatch>
 
-<FilesMatch "\.(php|log|json)$">
-    Require all denied     # Блокируем все PHP/JSON-файлы, кроме index.php
-</FilesMatch>
-
-<Files "index.php">
-    Require all granted    # Разрешаем только index.php
-</Files>
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type, Authorization"
