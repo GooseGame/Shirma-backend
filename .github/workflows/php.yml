@@ -22,6 +22,9 @@ jobs:
           cp -r vendor/ app/ core/ includes/ temp_deploy/public_html/
           cp composer.* temp_deploy/public_html/
           cp index.php .htaccess temp_deploy/public_html/
+
+          cd temp_deploy/public_html && composer dump-autoload --optimize
+          cd ../..
           
           tar -czf deploy.tar.gz -C temp_deploy/public_html .
 
