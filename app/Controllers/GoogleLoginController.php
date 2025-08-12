@@ -46,7 +46,7 @@ class GoogleLoginController extends StandartController {
 			$result = $stmt->fetch(\PDO::FETCH_ASSOC);
 			$isNew = false;
 
-			if (!$result) {
+			if (!$result || empty($result)) {
 				$stmt = $this->db->prepare('INSERT INTO users (google_id, email) VALUES (:google_id, :email)');
 				$stmt->bindValue(':google_id', $googleId);
 				$stmt->bindValue(':email', $email);
