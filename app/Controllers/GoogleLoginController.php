@@ -14,7 +14,7 @@ class GoogleLoginController extends StandartController {
 				http_response_code(400);
 				die(json_encode(['error' => 'Invalid JSON']));
 			}
-			$googleToken = $data['token'] ?? null;
+			$googleToken = $data['googleToken'] ?? null;
 
 			if (!$googleToken) {
 				http_response_code(400);
