@@ -1,7 +1,7 @@
 <?php
-namespace App\Controllers;
+namespace app\Controllers;
 use Firebase\JWT\JWT;
-use Сore\RefreshController;
+use core\RefreshController;
 
 class AuthController extends RefreshController
 {

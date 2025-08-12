@@ -1,5 +1,5 @@
 <?php
-namespace Сore;
+namespace core;
 use Firebase\JWT\Key;
 use Firebase\JWT\JWT;
 require_once __DIR__ . '/../includes/db.php';

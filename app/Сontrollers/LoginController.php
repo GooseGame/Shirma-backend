@@ -1,6 +1,6 @@
 <?php
-namespace App\Controllers;
-use Сore\AccessController;
+namespace app\Controllers;
+use core\AccessController;
 use Google\Client;
 use Firebase\JWT\JWT;
 

@@ -1,6 +1,6 @@
 <?php
-namespace App\Controllers;
-use Сore\AccessController;
+namespace app\Controllers;
+use core\AccessController;
 class CharactersController extends AccessController
 {
 	public function get()
