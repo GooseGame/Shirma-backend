@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $request = $_SERVER['REQUEST_URI'];
 switch (parse_url($request, PHP_URL_PATH)) {
     case '/login/google':
-        $controller = new app\Controllers\LoginController();
+        $controller = new app\Controllers\GoogleLoginController();
         $controller->google();
         break;
 	case '/logout':
