@@ -11,8 +11,12 @@ class AccessController extends StandartController
 	public function __construct()
 	{
 		parent::__construct();
-		$headers = getallheaders();
-		$authHeader = $headers['Authorization'] ?? '';
+
+		$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+		if (empty($authHeader) && function_exists('apache_request_headers')) {
+			$headers = apache_request_headers();
+			$authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+		}
 		$this->accessToken = str_replace('Bearer ', '', $authHeader);
 
 		try {
