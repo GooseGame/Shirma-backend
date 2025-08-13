@@ -17,7 +17,7 @@ class LoginController extends AccessController
 				echo json_encode([
 					'email'	=> $user['email'],
 					'name'	=> $user['name'],
-					'id'	=> $user['id']
+					'id'	=> $this->decoded->id
 				]);
 			}
 		} catch (\PDOException $e) {
