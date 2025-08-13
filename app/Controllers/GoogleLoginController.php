@@ -59,9 +59,9 @@ class GoogleLoginController extends StandartController {
 			}
 
 			// 4. Генерируем JWT и refresh-токен
-			$accessToken = JWT::encode(['id' => $userId], JWT_ACCESS_SECRET, 'HS256');
-			$refreshToken = bin2hex(random_bytes(32));  // Случайная строка
 			$expiresAt = date('Y-m-d H:i:s', time() + 7 * 24 * 60 * 60);  // Через 7 дней
+			$accessToken = JWT::encode(['id' => $userId, 'exp' => $expiresAt], JWT_ACCESS_SECRET, 'HS256');
+			$refreshToken = bin2hex(random_bytes(32));  // Случайная строка
 
 			$stmt = $this->db->prepare('INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES (:token, :user_id, :expires_at) on DUPLICATE KEY UPDATE token = :token, expires_at = :expires_at');
 			$stmt->bindValue(':token', $refreshToken);
