@@ -10,7 +10,7 @@ class StandartController
 	public function __construct()
 	{
 		try {
-		if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
+		if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['CONTENT_TYPE'] !== 'application/json') {
 			http_response_code(415);
 			die(json_encode(['error' => 'Unsupported Media Type']));
 		}
