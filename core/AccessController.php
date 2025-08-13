@@ -16,7 +16,7 @@ class AccessController extends StandartController
 		$this->accessToken = str_replace('Bearer ', '', $authHeader);
 
 		try {
-			$this->decoded = JWT::decode($this->accessToken, new Key($_ENV['JWT_ACCESS_SECRET'], 'HS256'));
+			$this->decoded = JWT::decode($this->accessToken, new Key(JWT_ACCESS_SECRET, 'HS256'));
 			
 			if ($this->decoded->exp < time()) {
 				throw new \Exception('Token expired');
