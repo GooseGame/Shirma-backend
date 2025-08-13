@@ -9,7 +9,7 @@ class LoginController extends AccessController
 			$stmt = $this->db->prepare('SELECT email, name, id FROM users WHERE user_id = :id');
 			$stmt->bindValue(':id', $this->decoded['id']);
 			$stmt->execute();
-			$user = $stmt->fetch();
+			$user = $stmt->fetch(\PDO::FETCH_ASSOC);
 			if (!$user) {
 				http_response_code(400);
 				die(json_encode(['error' => 'No such user']));
@@ -23,6 +23,9 @@ class LoginController extends AccessController
 		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'DB error']));
+		} catch (\Exception $e) {
+			http_response_code(500);
+			die(json_encode(['error' => $e->getMessage()]));
 		}
 	}
 
