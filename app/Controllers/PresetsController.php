@@ -22,7 +22,7 @@ class PresetsController extends AccessController
 		$presetsStmt = $this->db->prepare('SELECT COUNT(*) FROM presets');
 		$presetsStmt->execute();
 		$presetsCount = $presetsStmt->fetch(\PDO::FETCH_ASSOC);
-		echo json_encode($presetsCount);
+		echo json_encode(['count' => $presetsCount]);
 	}
 
 	public function save()

@@ -39,7 +39,7 @@ class LoginController extends AccessController
 			die(json_encode(['error' => 'Too long name']));
 		}
 		try {
-			$stmt = $this->db->prepare('UPDATE USERS SET name = :name WHERE user_id = :id');
+			$stmt = $this->db->prepare('UPDATE users SET name = :name WHERE id = :id');
 			$stmt->bindValue(':name', $data['name']);
 			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
@@ -52,7 +52,7 @@ class LoginController extends AccessController
 	}
 	public function deleteAccount() {
 		try {
-			$stmt = $this->db->prepare('DELETE FROM users WHERE user_id = :id');
+			$stmt = $this->db->prepare('DELETE FROM users WHERE id = :id');
 			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 		} catch (\PDOException $e) {

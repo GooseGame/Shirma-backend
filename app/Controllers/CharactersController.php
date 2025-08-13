@@ -33,8 +33,9 @@ class CharactersController extends AccessController
 			die(json_encode(['error' => 'no character to save']));
 		}
 
-		$stmt = $this->db->prepare("SELECT COUNT(*) FROM characters WHERE user_id = ?");
-		$stmt->execute([$data['user_id']]);
+		$stmt = $this->db->prepare("SELECT COUNT(*) FROM characters WHERE user_id = :id");
+		$stmt->bindValue(':id', $this->decoded->id);
+			$stmt->execute();
 		if ($stmt->fetchColumn() >= 20) {
 			http_response_code(429);
 			die(json_encode(['error' => 'Достигнут лимит в 20 объектов']));
