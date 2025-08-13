@@ -6,7 +6,7 @@ class CharactersController extends AccessController
 	public function get()
 	{
 		$charsStmt = $this->db->prepare('SELECT content FROM characters WHERE user_id = :id');
-		$charsStmt->bindValue(':id', $this->decoded['id']);
+		$charsStmt->bindValue(':id', $this->decoded->id);
 		$charsStmt->execute();
 		$characters = $charsStmt->fetchAll();
 

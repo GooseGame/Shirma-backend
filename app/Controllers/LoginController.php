@@ -7,7 +7,7 @@ class LoginController extends AccessController
 	public function getUser() {
 		try {
 			$stmt = $this->db->prepare('SELECT email, name FROM users WHERE id = :id');
-			$stmt->bindValue(':id', $this->decoded['id']);
+			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 			$user = $stmt->fetch(\PDO::FETCH_ASSOC);
 			if (!$user) {
@@ -41,7 +41,7 @@ class LoginController extends AccessController
 		try {
 			$stmt = $this->db->prepare('UPDATE USERS SET name = :name WHERE user_id = :id');
 			$stmt->bindValue(':name', $data['name']);
-			$stmt->bindValue(':id', $this->decoded['id']);
+			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 		} catch (\PDOException $e) {
 			http_response_code(500);
@@ -53,7 +53,7 @@ class LoginController extends AccessController
 	public function deleteAccount() {
 		try {
 			$stmt = $this->db->prepare('DELETE FROM users WHERE user_id = :id');
-			$stmt->bindValue(':id', $this->decoded['id']);
+			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 		} catch (\PDOException $e) {
 			http_response_code(500);
