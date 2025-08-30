@@ -18,6 +18,15 @@ class CharactersController extends AccessController
 		echo json_encode(['characters'=>$charsSimplified]);
 	}
 
+	public function count()
+	{
+		$charsStmt = $this->db->prepare('SELECT COUNT(*) FROM characters WHERE user_id = :id');
+		$charsStmt->bindValue(':id', $this->decoded->id);
+		$charsStmt->execute();
+		$presetsCount = $charsStmt->fetch(\PDO::FETCH_ASSOC);
+		echo json_encode(['count' => $presetsCount]);
+	}
+
 	public function save()
 	{
 		$maxSize = 82400; // ~80KB

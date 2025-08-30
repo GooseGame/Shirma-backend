@@ -57,9 +57,17 @@ switch (parse_url($request, PHP_URL_PATH)) {
         $controller = new app\Controllers\CharactersController();
         $controller->save();
         break;
+    case '/characters/count':
+        $controller = new app\Controllers\CharactersController();
+        $controller->count();
+        break;
 	case '/presets/get':
         $controller = new app\Controllers\PresetsController();
         $controller->get();
+        break;
+    case '/presets/count':
+        $controller = new app\Controllers\PresetsController();
+        $controller->count();
         break;
 	case '/presets/save':
         $controller = new app\Controllers\PresetsController();
