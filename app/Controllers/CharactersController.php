@@ -11,7 +11,7 @@ class CharactersController extends AccessController
 		$characters = $charsStmt->fetchAll();
 
 		if (count($characters) === 0) {
-			echo json_encode([]);
+			echo json_encode(['characters'=>[]]);
 			die;
 		}
 		$charsSimplified = array_column($characters, 'content');

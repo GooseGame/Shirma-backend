@@ -10,7 +10,7 @@ class PresetsController extends AccessController
 		$presets = $presetsStmt->fetchAll();
 
 		if (count($presets) === 0) {
-			echo json_encode([]);
+			echo json_encode(['presets' => []]);
 			die;
 		}
 		$presetsSimplified = array_column($presets, 'content');
