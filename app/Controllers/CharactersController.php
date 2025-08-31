@@ -60,7 +60,7 @@ class CharactersController extends AccessController
 		}
 
 		$cleanCharacter = strip_tags($data['character']);
-		$currentTimestamp = time();
+		$currentTimestamp = $data['timestamp'] ?? time();
 
 		try {
 			$stmt = $this->db->prepare("INSERT INTO characters (user_id, content, updated_at_timestamp) VALUES (?, ?, ?)");
