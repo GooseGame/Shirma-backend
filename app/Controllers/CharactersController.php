@@ -5,7 +5,7 @@ class CharactersController extends AccessController
 {
 	public function get()
 	{
-		$charsStmt = $this->db->prepare('SELECT content FROM characters WHERE user_id = :id');
+		$charsStmt = $this->db->prepare('SELECT content, updated_at_timestamp FROM characters WHERE user_id = :id');
 		$charsStmt->bindValue(':id', $this->decoded->id);
 		$charsStmt->execute();
 		$characters = $charsStmt->fetchAll();
@@ -14,8 +14,9 @@ class CharactersController extends AccessController
 			echo json_encode(['characters'=>[]]);
 			die;
 		}
+		$maxTimestamp = max(array_column($characters, 'updated_at_timestamp'));
 		$charsSimplified = array_column($characters, 'content');
-		echo json_encode(['characters'=>$charsSimplified]);
+		echo json_encode(['characters'=>$charsSimplified, 'lastUpdateTimestamp' => $maxTimestamp]);
 	}
 
 	public function count()
@@ -33,7 +34,7 @@ class CharactersController extends AccessController
 		$actualityStmt->bindValue(':id', $this->decoded->id);
 		$actualityStmt->execute();
 		$lastActual = $actualityStmt->fetch(\PDO::FETCH_ASSOC);
-		echo json_encode(['lastUpdated' => $lastActual]);
+		echo json_encode(['lastUpdated' => count($lastActual) == 0 ? 0 : $lastActual[0]['updated_at_timestamp']]);
 	}
 
 	public function save()
