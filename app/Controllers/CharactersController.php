@@ -60,11 +60,12 @@ class CharactersController extends AccessController
 		}
 
 		$cleanCharacter = strip_tags($data['character']);
+		$currentTimestamp = time();
 
 		try {
-			$stmt = $this->db->prepare("INSERT INTO characters (user_id, content) VALUES (?, ?)");
+			$stmt = $this->db->prepare("INSERT INTO characters (user_id, content, updated_at_timestamp) VALUES (?, ?, ?)");
 			
-			$stmt->execute([$data['user_id'], $cleanCharacter]);
+			$stmt->execute([$data['user_id'], $cleanCharacter, $currentTimestamp]);
 			
 			echo json_encode(['success' => true]);
 		} catch (\PDOException $e) {
