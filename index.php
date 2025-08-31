@@ -65,6 +65,10 @@ switch (parse_url($request, PHP_URL_PATH)) {
         $controller = new app\Controllers\CharactersController();
         $controller->getLastUpdatedTime();
         break;
+    case '/characters/delete':
+        $controller = new app\Controllers\CharactersController();
+        $controller->delete();
+        break;
 	case '/presets/get':
         $controller = new app\Controllers\PresetsController();
         $controller->get();

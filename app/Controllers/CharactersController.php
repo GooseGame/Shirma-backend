@@ -37,6 +37,25 @@ class CharactersController extends AccessController
 		echo json_encode(['lastUpdated' => count($lastActual) == 0 ? 0 : $lastActual[0]['updated_at_timestamp']]);
 	}
 
+	public function delete()
+	{
+		$data = json_decode(file_get_contents('php://input'), true);
+		$charId = $data['id'] ?? null;
+		if (!$charId || empty(trim($charId))) {
+			die(json_encode(['error' => 'Нет id персонажа для удаления']));
+		}
+		try {
+			$deleteStmt = $this->db->prepare('DELETE FROM characters WHERE char_id = :charId AND user_id = :id');
+			$deleteStmt->bindValue(':charId', $charId);
+			$deleteStmt->bindValue(':id', $this->decoded->id);
+			$deleteStmt->execute();
+			echo json_encode(['success' => true]);
+		} catch (\PDOException $e) {
+			http_response_code(500);
+			die(json_encode(['error' => 'DB error']));
+		}
+	}
+
 	public function save()
 	{
 		$maxSize = 82400; // ~80KB
@@ -48,6 +67,12 @@ class CharactersController extends AccessController
 		$character = $data['character'] ?? null;
 
 		if (!$character || empty(trim($character))) {
+			http_response_code(400);
+			die(json_encode(['error' => 'no character to save']));
+		}
+
+		$charId = $data['charId'] ?? null;
+		if (!$charId || empty(trim($charId))) {
 			http_response_code(400);
 			die(json_encode(['error' => 'no character to save']));
 		}
@@ -64,9 +89,9 @@ class CharactersController extends AccessController
 		$currentTimestamp = $data['timestamp'] ?? time();
 
 		try {
-			$stmt = $this->db->prepare("INSERT INTO characters (user_id, content, updated_at_timestamp) VALUES (?, ?, ?)");
+			$stmt = $this->db->prepare("INSERT INTO characters (user_id, content, char_id, updated_at_timestamp) VALUES (?, ?, ?, ?)");
 			
-			$stmt->execute([$data['user_id'], $cleanCharacter, $currentTimestamp]);
+			$stmt->execute([$data['user_id'], $cleanCharacter, $charId, $currentTimestamp]);
 			
 			echo json_encode(['success' => true]);
 		} catch (\PDOException $e) {
