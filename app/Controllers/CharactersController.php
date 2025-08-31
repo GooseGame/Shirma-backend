@@ -23,8 +23,17 @@ class CharactersController extends AccessController
 		$charsStmt = $this->db->prepare('SELECT COUNT(*) FROM characters WHERE user_id = :id');
 		$charsStmt->bindValue(':id', $this->decoded->id);
 		$charsStmt->execute();
-		$presetsCount = $charsStmt->fetch(\PDO::FETCH_ASSOC);
-		echo json_encode(['count' => $presetsCount]);
+		$charsCount = $charsStmt->fetch(\PDO::FETCH_ASSOC);
+		echo json_encode(['count' => $charsCount]);
+	}
+
+	public function getLastUpdatedTime()
+	{
+		$actualityStmt = $this->db->prepare('SELECT MAX(updated_at_timestamp) FROM characters WHERE user_id = :id');
+		$actualityStmt->bindValue(':id', $this->decoded->id);
+		$actualityStmt->execute();
+		$lastActual = $actualityStmt->fetch(\PDO::FETCH_ASSOC);
+		echo json_encode(['lastUpdated' => $lastActual]);
 	}
 
 	public function save()
