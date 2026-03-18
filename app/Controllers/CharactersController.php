@@ -59,39 +59,70 @@ class CharactersController extends AccessController
 	public function save()
 	{
 		$maxSize = 82400; // ~80KB
-		$data = json_decode(file_get_contents('php://input'), true);
-		if (strlen($data) > $maxSize) {
+		$raw = file_get_contents('php://input');
+		if ($raw === false) {
+			http_response_code(400);
+			die(json_encode(['error' => 'invalid request body']));
+		}
+		if (strlen($raw) > $maxSize) {
 			http_response_code(413);
 			die(json_encode(['error' => 'JSON слишком большой']));
 		}
+		$data = json_decode($raw, true);
+		if (!is_array($data)) {
+			http_response_code(400);
+			die(json_encode(['error' => 'invalid JSON']));
+		}
+
 		$character = $data['character'] ?? null;
 
-		if (!$character || empty(trim($character))) {
+		if (is_string($character)) {
+			$character = trim($character);
+			if ($character === '') {
+				http_response_code(400);
+				die(json_encode(['error' => 'no character to save']));
+			}
+		} elseif (is_array($character)) {
+			// keep as-is; will encode to JSON below
+		} else {
 			http_response_code(400);
 			die(json_encode(['error' => 'no character to save']));
 		}
 
 		$charId = $data['charId'] ?? null;
-		if (!$charId || empty(trim($charId))) {
+		if (!is_string($charId)) {
 			http_response_code(400);
-			die(json_encode(['error' => 'no character to save']));
+			die(json_encode(['error' => 'no charId to save']));
+		}
+		$charId = trim($charId);
+		if ($charId === '') {
+			http_response_code(400);
+			die(json_encode(['error' => 'no charId to save']));
 		}
 
 		$stmt = $this->db->prepare("SELECT COUNT(*) FROM characters WHERE user_id = :id");
 		$stmt->bindValue(':id', $this->decoded->id);
-			$stmt->execute();
+		$stmt->execute();
 		if ($stmt->fetchColumn() >= 20) {
 			http_response_code(429);
 			die(json_encode(['error' => 'Достигнут лимит в 20 объектов']));
 		}
 
-		$cleanCharacter = strip_tags($data['character']);
+		if (is_array($character)) {
+			$cleanCharacter = json_encode($character, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+			if ($cleanCharacter === false) {
+				http_response_code(400);
+				die(json_encode(['error' => 'invalid character payload']));
+			}
+		} else {
+			$cleanCharacter = strip_tags($character);
+		}
 		$currentTimestamp = $data['timestamp'] ?? time();
 
 		try {
 			$stmt = $this->db->prepare("INSERT INTO characters (user_id, content, char_id, updated_at_timestamp) VALUES (?, ?, ?, ?)");
 			
-			$stmt->execute([$data['user_id'], $cleanCharacter, $charId, $currentTimestamp]);
+			$stmt->execute([$this->decoded->id, $cleanCharacter, $charId, $currentTimestamp]);
 			
 			echo json_encode(['success' => true]);
 		} catch (\PDOException $e) {

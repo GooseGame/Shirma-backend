@@ -28,19 +28,45 @@ class PresetsController extends AccessController
 	public function save()
 	{
 		$maxSize = 82400; // ~80KB
-		$data = json_decode(file_get_contents('php://input'), true);
-		if (strlen($data) > $maxSize) {
+		$raw = file_get_contents('php://input');
+		if ($raw === false) {
+			http_response_code(400);
+			die(json_encode(['error' => 'invalid request body']));
+		}
+		if (strlen($raw) > $maxSize) {
 			http_response_code(413);
 			die(json_encode(['error' => 'JSON слишком большой']));
 		}
+		$data = json_decode($raw, true);
+		if (!is_array($data)) {
+			http_response_code(400);
+			die(json_encode(['error' => 'invalid JSON']));
+		}
+
 		$character = $data['character'] ?? null;
 
-		if (!$character || empty(trim($character))) {
+		if (is_string($character)) {
+			$character = trim($character);
+			if ($character === '') {
+				http_response_code(400);
+				die(json_encode(['error' => 'no character to save']));
+			}
+		} elseif (is_array($character)) {
+			// keep as-is; will encode to JSON below
+		} else {
 			http_response_code(400);
 			die(json_encode(['error' => 'no character to save']));
 		}
 
-		$cleanCharacter = strip_tags($data['character']);
+		if (is_array($character)) {
+			$cleanCharacter = json_encode($character, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+			if ($cleanCharacter === false) {
+				http_response_code(400);
+				die(json_encode(['error' => 'invalid character payload']));
+			}
+		} else {
+			$cleanCharacter = strip_tags($character);
+		}
 
 		try {
 			$stmt = $this->db->prepare("INSERT INTO presets (content) VALUES (?)");
