@@ -14,17 +14,39 @@ class CharactersController extends AccessController
 			echo json_encode(['characters'=>[]]);
 			die;
 		}
-		$maxTimestamp = max(array_column($characters, 'updated_at_timestamp'));
-		$charsSimplified = array_map(function (array $row) {
+		$toUnix = function ($raw) {
+			if ($raw === null || $raw === '') {
+				return 0;
+			}
+			if ($raw instanceof \DateTimeInterface) {
+				return (int) $raw->format('U');
+			}
+			if (is_numeric($raw)) {
+				return (int) $raw;
+			}
+			$parsed = strtotime((string) $raw);
+			return $parsed !== false ? $parsed : 0;
+		};
+		$maxTimestamp = max(array_map(function ($row) use ($toUnix) {
+			return $toUnix($row['updated_at_timestamp'] ?? null);
+		}, $characters));
+		$charsSimplified = array_map(function (array $row) use ($toUnix) {
+			$tsRaw = $row['updated_at_timestamp'] ?? null;
 			$raw = $row['content'];
 			if (!is_string($raw)) {
-				return $raw;
+				$result = $raw;
+			} else {
+				$decoded = json_decode($raw, true);
+				if (json_last_error() === JSON_ERROR_NONE) {
+					$result = $decoded;
+				} else {
+					$result = $raw;
+				}
 			}
-			$decoded = json_decode($raw, true);
-			if (json_last_error() === JSON_ERROR_NONE) {
-				return $decoded;
+			if (is_array($result) && !array_key_exists('lastUpdateTimestamp', $result)) {
+				$result['lastUpdateTimestamp'] = $toUnix($tsRaw);
 			}
-			return $raw;
+			return $result;
 		}, $characters);
 		echo json_encode(['characters'=>$charsSimplified, 'lastUpdateTimestamp' => $maxTimestamp]);
 	}
