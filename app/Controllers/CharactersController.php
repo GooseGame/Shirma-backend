@@ -15,7 +15,17 @@ class CharactersController extends AccessController
 			die;
 		}
 		$maxTimestamp = max(array_column($characters, 'updated_at_timestamp'));
-		$charsSimplified = array_column($characters, 'content');
+		$charsSimplified = array_map(function (array $row) {
+			$raw = $row['content'];
+			if (!is_string($raw)) {
+				return $raw;
+			}
+			$decoded = json_decode($raw, true);
+			if (json_last_error() === JSON_ERROR_NONE) {
+				return $decoded;
+			}
+			return $raw;
+		}, $characters);
 		echo json_encode(['characters'=>$charsSimplified, 'lastUpdateTimestamp' => $maxTimestamp]);
 	}
 
