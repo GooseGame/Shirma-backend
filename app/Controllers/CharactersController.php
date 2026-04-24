@@ -90,6 +90,9 @@ class CharactersController extends AccessController
 		}
 
 		$charId = $data['charId'] ?? null;
+		if (is_int($charId) || is_float($charId)) {
+			$charId = (string) $charId;
+		}
 		if (!is_string($charId)) {
 			http_response_code(400);
 			die(json_encode(['error' => 'no charId to save']));
@@ -98,14 +101,6 @@ class CharactersController extends AccessController
 		if ($charId === '') {
 			http_response_code(400);
 			die(json_encode(['error' => 'no charId to save']));
-		}
-
-		$stmt = $this->db->prepare("SELECT COUNT(*) FROM characters WHERE user_id = :id");
-		$stmt->bindValue(':id', $this->decoded->id);
-		$stmt->execute();
-		if ($stmt->fetchColumn() >= 20) {
-			http_response_code(429);
-			die(json_encode(['error' => 'Достигнут лимит в 20 объектов']));
 		}
 
 		if (is_array($character)) {
@@ -117,13 +112,42 @@ class CharactersController extends AccessController
 		} else {
 			$cleanCharacter = strip_tags($character);
 		}
-		$currentTimestamp = $data['timestamp'] ?? time();
+
+		$rawTs = $data['timestamp'] ?? null;
+		if (is_string($rawTs) && is_numeric($rawTs)) {
+			$rawTs = 0 + $rawTs;
+		}
+		if (isset($rawTs) && is_numeric($rawTs)) {
+			$n = (float) $rawTs;
+			// JS Date.now() — миллисекунды; для TIMESTAMP в MySQL нужны секунды для FROM_UNIXTIME
+			$unixSeconds = $n > 1e11 ? (int) floor($n / 1000) : (int) $n;
+		} elseif (is_string($rawTs) && $rawTs !== '') {
+			$parsed = strtotime($rawTs);
+			$unixSeconds = $parsed !== false ? $parsed : time();
+		} else {
+			$unixSeconds = time();
+		}
 
 		try {
-			$stmt = $this->db->prepare("INSERT INTO characters (user_id, content, char_id, updated_at_timestamp) VALUES (?, ?, ?, ?)");
-			
-			$stmt->execute([$this->decoded->id, $cleanCharacter, $charId, $currentTimestamp]);
-			
+			$existsStmt = $this->db->prepare('SELECT 1 FROM characters WHERE user_id = ? AND char_id = ? LIMIT 1');
+			$existsStmt->execute([$this->decoded->id, $charId]);
+			$exists = (bool) $existsStmt->fetchColumn();
+
+			if ($exists) {
+				$stmt = $this->db->prepare('UPDATE characters SET content = ?, updated_at_timestamp = FROM_UNIXTIME(?) WHERE user_id = ? AND char_id = ?');
+				$stmt->execute([$cleanCharacter, $unixSeconds, $this->decoded->id, $charId]);
+			} else {
+				$stmt = $this->db->prepare('SELECT COUNT(*) FROM characters WHERE user_id = :id');
+				$stmt->bindValue(':id', $this->decoded->id);
+				$stmt->execute();
+				if ($stmt->fetchColumn() >= 20) {
+					http_response_code(429);
+					die(json_encode(['error' => 'Достигнут лимит в 20 объектов']));
+				}
+				$stmt = $this->db->prepare('INSERT INTO characters (user_id, content, char_id, updated_at_timestamp) VALUES (?, ?, ?, FROM_UNIXTIME(?))');
+				$stmt->execute([$this->decoded->id, $cleanCharacter, $charId, $unixSeconds]);
+			}
+
 			echo json_encode(['success' => true]);
 		} catch (\PDOException $e) {
 			http_response_code(500);
