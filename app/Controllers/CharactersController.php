@@ -40,22 +40,31 @@ class CharactersController extends AccessController
 
 	public function getLastUpdatedTime()
 	{
-		$actualityStmt = $this->db->prepare('SELECT MAX(updated_at_timestamp) AS max_ts FROM characters WHERE user_id = :id');
+		$actualityStmt = $this->db->prepare('SELECT char_id, updated_at_timestamp FROM characters WHERE user_id = :id');
 		$actualityStmt->bindValue(':id', $this->decoded->id);
 		$actualityStmt->execute();
-		$row = $actualityStmt->fetch(\PDO::FETCH_ASSOC);
-		$raw = ($row !== false && isset($row['max_ts'])) ? $row['max_ts'] : null;
-		if ($raw === null || $raw === '') {
-			$lastUpdated = 0;
-		} elseif ($raw instanceof \DateTimeInterface) {
-			$lastUpdated = (int) $raw->format('U');
-		} elseif (is_numeric($raw)) {
-			$lastUpdated = (int) $raw;
-		} else {
+		$rows = $actualityStmt->fetchAll(\PDO::FETCH_ASSOC);
+		$toUnix = function ($raw) {
+			if ($raw === null || $raw === '') {
+				return 0;
+			}
+			if ($raw instanceof \DateTimeInterface) {
+				return (int) $raw->format('U');
+			}
+			if (is_numeric($raw)) {
+				return (int) $raw;
+			}
 			$parsed = strtotime((string) $raw);
-			$lastUpdated = $parsed !== false ? $parsed : 0;
+			return $parsed !== false ? $parsed : 0;
+		};
+		$items = [];
+		foreach ($rows as $row) {
+			$items[] = [
+				'charId' => isset($row['char_id']) ? (string) $row['char_id'] : '',
+				'lastUpdatedTimestamp' => $toUnix($row['updated_at_timestamp'] ?? null),
+			];
 		}
-		echo json_encode(['lastUpdated' => $lastUpdated]);
+		echo json_encode($items);
 	}
 
 	public function delete()
