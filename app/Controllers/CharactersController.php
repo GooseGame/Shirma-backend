@@ -70,8 +70,8 @@ class CharactersController extends AccessController
 					$result = $raw;
 				}
 			}
-			if (is_array($result) && !array_key_exists('lastUpdateTimestamp', $result)) {
-				$result['lastUpdateTimestamp'] = $toUnix($tsRaw);
+			if (is_array($result) && !array_key_exists('lastUpdatedTimestamp', $result)) {
+				$result['lastUpdatedTimestamp'] = $toUnix($tsRaw);
 			}
 			return $result;
 		}, $characters);
