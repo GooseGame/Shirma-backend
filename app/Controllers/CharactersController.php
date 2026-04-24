@@ -5,8 +5,35 @@ class CharactersController extends AccessController
 {
 	public function get()
 	{
-		$charsStmt = $this->db->prepare('SELECT content, updated_at_timestamp FROM characters WHERE user_id = :id');
-		$charsStmt->bindValue(':id', $this->decoded->id);
+		$charIdFilter = null;
+		if (array_key_exists('charIds', $_GET)) {
+			$raw = $_GET['charIds'];
+			$parts = is_array($raw) ? $raw : explode(',', (string) $raw);
+			$charIdFilter = array_values(array_unique(array_filter(array_map('trim', $parts), function ($s) {
+				return $s !== '';
+			})));
+		}
+
+		if (is_array($charIdFilter) && count($charIdFilter) === 0) {
+			echo json_encode(['characters' => []]);
+			die;
+		}
+
+		if (is_array($charIdFilter)) {
+			$placeholders = [];
+			foreach (array_keys($charIdFilter) as $i) {
+				$placeholders[] = ':cid' . (int) $i;
+			}
+			$sql = 'SELECT content, updated_at_timestamp FROM characters WHERE user_id = :id AND char_id IN (' . implode(',', $placeholders) . ')';
+			$charsStmt = $this->db->prepare($sql);
+			$charsStmt->bindValue(':id', $this->decoded->id);
+			foreach ($charIdFilter as $i => $cid) {
+				$charsStmt->bindValue(':cid' . (int) $i, (string) $cid);
+			}
+		} else {
+			$charsStmt = $this->db->prepare('SELECT content, updated_at_timestamp FROM characters WHERE user_id = :id');
+			$charsStmt->bindValue(':id', $this->decoded->id);
+		}
 		$charsStmt->execute();
 		$characters = $charsStmt->fetchAll();
 
