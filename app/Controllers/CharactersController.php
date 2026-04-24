@@ -30,11 +30,22 @@ class CharactersController extends AccessController
 
 	public function getLastUpdatedTime()
 	{
-		$actualityStmt = $this->db->prepare('SELECT MAX(updated_at_timestamp) FROM characters WHERE user_id = :id');
+		$actualityStmt = $this->db->prepare('SELECT MAX(updated_at_timestamp) AS max_ts FROM characters WHERE user_id = :id');
 		$actualityStmt->bindValue(':id', $this->decoded->id);
 		$actualityStmt->execute();
-		$lastActual = $actualityStmt->fetch(\PDO::FETCH_ASSOC);
-		echo json_encode(['lastUpdated' => count($lastActual) == 0 ? 0 : $lastActual[0]['updated_at_timestamp']]);
+		$row = $actualityStmt->fetch(\PDO::FETCH_ASSOC);
+		$raw = ($row !== false && isset($row['max_ts'])) ? $row['max_ts'] : null;
+		if ($raw === null || $raw === '') {
+			$lastUpdated = 0;
+		} elseif ($raw instanceof \DateTimeInterface) {
+			$lastUpdated = (int) $raw->format('U');
+		} elseif (is_numeric($raw)) {
+			$lastUpdated = (int) $raw;
+		} else {
+			$parsed = strtotime((string) $raw);
+			$lastUpdated = $parsed !== false ? $parsed : 0;
+		}
+		echo json_encode(['lastUpdated' => $lastUpdated]);
 	}
 
 	public function delete()
