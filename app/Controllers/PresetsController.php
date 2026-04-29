@@ -105,7 +105,22 @@ class PresetsController extends AccessController
 				$stmt->bindValue(':presetId', $presetId);
 				$stmt->execute();
 			}
+			$stmt = $this->db->prepare('UPDATE update_presets_time SET updated_at_timestamp = NOW()');
+			$stmt->execute();
 			echo json_encode(['success' => true]);
+		} catch (\PDOException $e) {
+			http_response_code(500);
+			die(json_encode(['error' => 'Ошибка базы данных']));
+		}
+	}
+
+	public function getLastUpdatedTime()
+	{
+		try {
+			$stmt = $this->db->prepare('SELECT MAX(updated_at_timestamp) as lastUpdatedTimestamp FROM update_presets_time');
+			$stmt->execute();
+			$lastUpdatedTimestamp = $stmt->fetch(\PDO::FETCH_ASSOC);
+			echo json_encode(['lastUpdatedTimestamp' => $lastUpdatedTimestamp]);
 		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'Ошибка базы данных']));
@@ -137,6 +152,8 @@ class PresetsController extends AccessController
 			}
 			$stmt = $this->db->prepare('DELETE FROM presets WHERE preset_id = :presetId');
 			$stmt->bindValue(':presetId', $presetId);
+			$stmt->execute();
+			$stmt = $this->db->prepare('UPDATE update_presets_time SET updated_at_timestamp = NOW()');
 			$stmt->execute();
 			echo json_encode(['success' => true]);
 		} catch (\PDOException $e) {

@@ -85,6 +85,10 @@ switch (parse_url($request, PHP_URL_PATH)) {
         $controller = new app\Controllers\PresetsController();
         $controller->delete();
         break;
+	case '/presets/lastUpdated':
+        $controller = new app\Controllers\PresetsController();
+        $controller->getLastUpdatedTime();
+        break;
     default:
         http_response_code(404);
         echo 'Not Found';
