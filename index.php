@@ -81,6 +81,10 @@ switch (parse_url($request, PHP_URL_PATH)) {
         $controller = new app\Controllers\PresetsController();
         $controller->save();
         break;
+	case '/presets/delete':
+        $controller = new app\Controllers\PresetsController();
+        $controller->delete();
+        break;
     default:
         http_response_code(404);
         echo 'Not Found';
