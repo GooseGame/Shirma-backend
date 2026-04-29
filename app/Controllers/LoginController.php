@@ -6,7 +6,7 @@ class LoginController extends AccessController
 {
 	public function getUser() {
 		try {
-			$stmt = $this->db->prepare('SELECT email, name FROM users WHERE id = :id');
+			$stmt = $this->db->prepare('SELECT email, name, role FROM users WHERE id = :id');
 			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 			$user = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -17,7 +17,8 @@ class LoginController extends AccessController
 				echo json_encode([
 					'email'	=> $user['email'],
 					'name'	=> $user['name'],
-					'id'	=> $this->decoded->id
+					'id'	=> $this->decoded->id,
+					'role'	=> $user['role']
 				]);
 			}
 		} catch (\PDOException $e) {
@@ -53,6 +54,12 @@ class LoginController extends AccessController
 	public function deleteAccount() {
 		try {
 			$stmt = $this->db->prepare('DELETE FROM users WHERE id = :id');
+			$stmt->bindValue(':id', $this->decoded->id);
+			$stmt->execute();
+			$stmt = $this->db->prepare('DELETE FROM refresh_tokens WHERE user_id = :id');
+			$stmt->bindValue(':id', $this->decoded->id);
+			$stmt->execute();
+			$stmt = $this->db->prepare('DELETE FROM characters WHERE user_id = :id');
 			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 		} catch (\PDOException $e) {
