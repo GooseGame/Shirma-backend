@@ -14,6 +14,9 @@ class PresetsController extends AccessController
 			die;
 		}
 		$presetsSimplified = array_column($presets, 'content');
+		$presetsSimplified = array_map(function ($content) {
+			return json_decode($content, true);
+		}, $presetsSimplified);
 		echo json_encode(['presets' => $presetsSimplified]);
 	}
 
