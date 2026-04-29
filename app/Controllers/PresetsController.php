@@ -120,7 +120,7 @@ class PresetsController extends AccessController
 			$stmt = $this->db->prepare('SELECT MAX(updated_at_timestamp) as lastUpdatedTimestamp FROM update_presets_time');
 			$stmt->execute();
 			$lastUpdatedTimestamp = $stmt->fetch(\PDO::FETCH_ASSOC);
-			echo json_encode(['lastUpdatedTimestamp' => $lastUpdatedTimestamp]);
+			echo json_encode(['lastUpdatedTimestamp' => $lastUpdatedTimestamp['lastUpdatedTimestamp']]);
 		} catch (\PDOException $e) {
 			http_response_code(500);
 			die(json_encode(['error' => 'Ошибка базы данных']));
