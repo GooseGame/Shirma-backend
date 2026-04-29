@@ -83,7 +83,7 @@ class PresetsController extends AccessController
 			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 			$user = $stmt->fetch(\PDO::FETCH_ASSOC);
-			if ($user['role'] !== 1) {
+			if ((int)$user['role'] !== 1) {
 				http_response_code(403);
 				die(json_encode(['error' => 'You are not authorized to save presets']));
 			}
@@ -96,12 +96,12 @@ class PresetsController extends AccessController
 				$stmt->bindValue(':content', $cleanCharacter);
 				$stmt->bindValue(':presetId', $presetId);
 				$stmt->execute();
-			}
 			} else {
 				$stmt = $this->db->prepare("INSERT INTO presets (content, preset_id) VALUES (:content, :presetId)");
 				$stmt->bindValue(':content', $cleanCharacter);
 				$stmt->bindValue(':presetId', $presetId);
 				$stmt->execute();
+			}
 			echo json_encode(['success' => true]);
 		} catch (\PDOException $e) {
 			http_response_code(500);
@@ -111,6 +111,13 @@ class PresetsController extends AccessController
 
 	public function delete()
 	{
+		$raw = file_get_contents('php://input');
+		$data = json_decode($raw ?: '', true);
+		if (!is_array($data)) {
+			http_response_code(400);
+			die(json_encode(['error' => 'invalid JSON']));
+		}
+
 		$presetId = $data['presetId'] ?? null;
 		if (!$presetId || empty(trim($presetId))) {
 			http_response_code(400);
@@ -121,7 +128,7 @@ class PresetsController extends AccessController
 			$stmt->bindValue(':id', $this->decoded->id);
 			$stmt->execute();
 			$user = $stmt->fetch(\PDO::FETCH_ASSOC);
-			if ($user['role'] !== 1) {
+			if ((int)$user['role'] !== 1) {
 				http_response_code(403);
 				die(json_encode(['error' => 'You are not authorized to delete presets']));
 			}
