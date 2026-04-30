@@ -89,6 +89,18 @@ switch (parse_url($request, PHP_URL_PATH)) {
         $controller = new app\Controllers\PresetsController();
         $controller->getLastUpdatedTime();
         break;
+	case '/monsters/get':
+		$controller = new app\Controllers\MonstersController();
+		$controller->get();
+		break;
+	case '/monsters/save':
+		$controller = new app\Controllers\MonstersController();
+		$controller->save();
+		break;
+	case '/monsters/delete':
+		$controller = new app\Controllers\MonstersController();
+		$controller->delete();
+		break;
     default:
         http_response_code(404);
         echo 'Not Found';
